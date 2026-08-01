@@ -1,0 +1,5 @@
+- [ ] Add `ImageSize` enum and `resizeBitmap` to `ImageProcessor.kt`
+- [ ] Add `ImageSize` preference to `SettingsRepository.kt`
+- [ ] Update `MainViewModel.kt` to handle image resizing in processing pipeline
+- [ ] Add Image Size selection UI to `MainActivity.kt`
+- [ ] Verify implementation by running the app and checking image dimensions
