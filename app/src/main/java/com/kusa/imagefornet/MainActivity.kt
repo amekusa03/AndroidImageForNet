@@ -59,8 +59,9 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ImageForNetApp(viewModel: MainViewModel = viewModel()) {
+fun ImageForNetApp() {
     val context = LocalContext.current
+    val viewModel: MainViewModel = viewModel(factory = MainViewModel.provideFactory(context))
     val scrollState = rememberScrollState()
     
     val launcher = rememberLauncherForActivityResult(
@@ -163,8 +164,7 @@ fun ImageForNetApp(viewModel: MainViewModel = viewModel()) {
                             OutlinedTextField(
                                 value = viewModel.watermarkText,
                                 onValueChange = { 
-                                    viewModel.watermarkText = it
-                                    viewModel.updateProcessedImage()
+                                    viewModel.updateWatermarkText(it)
                                 },
                                 label = { Text("ウォーターマークのテキスト") },
                                 modifier = Modifier.fillMaxWidth(),
@@ -176,8 +176,7 @@ fun ImageForNetApp(viewModel: MainViewModel = viewModel()) {
                             PositionGrid(
                                 selectedPosition = viewModel.position,
                                 onPositionSelected = { 
-                                    viewModel.position = it
-                                    viewModel.updateProcessedImage()
+                                    viewModel.updatePosition(it)
                                 }
                             )
 
@@ -185,8 +184,7 @@ fun ImageForNetApp(viewModel: MainViewModel = viewModel()) {
                             ColorPalette(
                                 selectedColor = viewModel.selectedColor,
                                 onColorSelected = { 
-                                    viewModel.selectedColor = it
-                                    viewModel.updateProcessedImage()
+                                    viewModel.updateColor(it)
                                 }
                             )
 
@@ -194,22 +192,30 @@ fun ImageForNetApp(viewModel: MainViewModel = viewModel()) {
                                 label = "フォントサイズ",
                                 value = viewModel.textSize,
                                 onValueChange = { 
-                                    viewModel.textSize = it
-                                    viewModel.updateProcessedImage()
+                                    viewModel.updateTextSize(it)
                                 },
-                                valueRange = 20f..300f
+                                valueRange = 0.01f..0.2f,
+                                displayMultiplier = 100f,
+                                unit = "%"
                             )
 
                             SliderControl(
                                 label = "不透明度",
                                 value = viewModel.opacity,
                                 onValueChange = { 
-                                    viewModel.opacity = it
-                                    viewModel.updateProcessedImage()
+                                    viewModel.updateOpacity(it)
                                 },
                                 valueRange = 0f..255f,
                                 displayMultiplier = 100f / 255f,
                                 unit = "%"
+                            )
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
+
+                            Text("画像サイズ", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                            ImageSizeSelector(
+                                selectedSize = viewModel.imageSize,
+                                onSizeSelected = { viewModel.updateImageSize(it) }
                             )
                         }
                     }
@@ -240,6 +246,24 @@ fun ImageForNetApp(viewModel: MainViewModel = viewModel()) {
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ImageSizeSelector(selectedSize: ImageSize, onSizeSelected: (ImageSize) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        ImageSize.values().forEach { size ->
+            FilterChip(
+                modifier = Modifier.weight(1f),
+                selected = selectedSize == size,
+                onClick = { onSizeSelected(size) },
+                label = { Text(size.label, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+                shape = RoundedCornerShape(8.dp)
+            )
         }
     }
 }

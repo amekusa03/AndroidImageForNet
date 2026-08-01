@@ -12,15 +12,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.OutputStream
 
-class MainViewModel : ViewModel() {
+class MainViewModel(private val repository: SettingsRepository) : ViewModel() {
 
     var originalBitmap by mutableStateOf<Bitmap?>(null)
         private set
@@ -28,16 +30,37 @@ class MainViewModel : ViewModel() {
     var processedBitmap by mutableStateOf<Bitmap?>(null)
         private set
 
-    var watermarkText by mutableStateOf("Watermark")
+    var watermarkText by mutableStateOf("")
+        private set
     var position by mutableStateOf(WatermarkPosition.BOTTOM_RIGHT)
-    var textSize by mutableStateOf(100f)
+        private set
+    var textSize by mutableStateOf(0.05f)
+        private set
     var opacity by mutableStateOf(128f)
+        private set
     var selectedColor by mutableStateOf(Color.White)
+        private set
+    var imageSize by mutableStateOf(ImageSize.ORIGINAL)
+        private set
     
     var isProcessing by mutableStateOf(false)
         private set
 
     private var processingJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            // Load initial values once
+            val settings = repository.settingsFlow.first()
+            watermarkText = settings.text
+            position = settings.position
+            textSize = settings.textSize
+            opacity = settings.opacity
+            selectedColor = Color(settings.color)
+            imageSize = settings.imageSize
+            // No need to call updateProcessedImage here as no image is loaded yet
+        }
+    }
 
     fun setImage(context: Context, uri: Uri) {
         viewModelScope.launch {
@@ -49,7 +72,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun updateProcessedImage() {
+    private fun updateProcessedImage() {
         processingJob?.cancel()
         processingJob = viewModelScope.launch {
             val source = originalBitmap ?: return@launch
@@ -58,12 +81,13 @@ class MainViewModel : ViewModel() {
             delay(100)
             
             val result = withContext(Dispatchers.Default) {
+                val resized = ImageProcessor.resizeBitmap(source, imageSize)
                 ImageProcessor.applyWatermark(
-                    sourceBitmap = source,
+                    sourceBitmap = resized,
                     watermarkText = watermarkText,
                     position = position,
                     textColor = selectedColor.toArgb(),
-                    textSize = textSize,
+                    textSizeRatio = textSize,
                     opacity = opacity.toInt()
                 )
             }
@@ -110,6 +134,51 @@ class MainViewModel : ViewModel() {
                 contentValues.clear()
                 contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
                 contentResolver.update(uri, contentValues, null, null)
+            }
+        }
+    }
+
+    fun updateWatermarkText(text: String) {
+        watermarkText = text
+        updateProcessedImage()
+        viewModelScope.launch { repository.updateWatermarkText(text) }
+    }
+
+    fun updatePosition(pos: WatermarkPosition) {
+        position = pos
+        updateProcessedImage()
+        viewModelScope.launch { repository.updatePosition(pos) }
+    }
+
+    fun updateTextSize(size: Float) {
+        textSize = size
+        updateProcessedImage()
+        viewModelScope.launch { repository.updateTextSize(size) }
+    }
+
+    fun updateOpacity(value: Float) {
+        opacity = value
+        updateProcessedImage()
+        viewModelScope.launch { repository.updateOpacity(value) }
+    }
+
+    fun updateColor(color: Color) {
+        selectedColor = color
+        updateProcessedImage()
+        viewModelScope.launch { repository.updateColor(color.toArgb()) }
+    }
+
+    fun updateImageSize(size: ImageSize) {
+        imageSize = size
+        updateProcessedImage()
+        viewModelScope.launch { repository.updateImageSize(size) }
+    }
+
+    companion object {
+        fun provideFactory(context: Context): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return MainViewModel(SettingsRepository(context.applicationContext)) as T
             }
         }
     }

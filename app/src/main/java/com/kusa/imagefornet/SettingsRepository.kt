@@ -21,6 +21,7 @@ class SettingsRepository(private val context: Context) {
         val TEXT_SIZE = floatPreferencesKey("text_size")
         val OPACITY = floatPreferencesKey("opacity")
         val COLOR = intPreferencesKey("color")
+        val IMAGE_SIZE = stringPreferencesKey("image_size")
     }
 
     val settingsFlow: Flow<WatermarkSettings> = context.dataStore.data
@@ -34,9 +35,16 @@ class SettingsRepository(private val context: Context) {
                 } catch (e: Exception) {
                     WatermarkPosition.BOTTOM_RIGHT
                 },
-                textSize = preferences[PreferencesKeys.TEXT_SIZE] ?: 100f,
+                textSize = preferences[PreferencesKeys.TEXT_SIZE] ?: 0.05f,
                 opacity = preferences[PreferencesKeys.OPACITY] ?: 128f,
-                color = preferences[PreferencesKeys.COLOR] ?: -1 // White
+                color = preferences[PreferencesKeys.COLOR] ?: -1, // White
+                imageSize = try {
+                    ImageSize.valueOf(
+                        preferences[PreferencesKeys.IMAGE_SIZE] ?: ImageSize.ORIGINAL.name
+                    )
+                } catch (e: Exception) {
+                    ImageSize.ORIGINAL
+                }
             )
         }
 
@@ -59,6 +67,10 @@ class SettingsRepository(private val context: Context) {
     suspend fun updateColor(color: Int) {
         context.dataStore.edit { it[PreferencesKeys.COLOR] = color }
     }
+
+    suspend fun updateImageSize(imageSize: ImageSize) {
+        context.dataStore.edit { it[PreferencesKeys.IMAGE_SIZE] = imageSize.name }
+    }
 }
 
 data class WatermarkSettings(
@@ -66,5 +78,6 @@ data class WatermarkSettings(
     val position: WatermarkPosition,
     val textSize: Float,
     val opacity: Float,
-    val color: Int
+    val color: Int,
+    val imageSize: ImageSize
 )

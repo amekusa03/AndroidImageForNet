@@ -13,6 +13,13 @@ enum class WatermarkPosition {
     TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
 }
 
+enum class ImageSize(val label: String, val maxSide: Int?) {
+    ORIGINAL("変更しない", null),
+    SMALL("小", 800),
+    MEDIUM("中", 1200),
+    LARGE("大", 1600)
+}
+
 object ImageProcessor {
 
     fun loadBitmap(context: Context, uri: Uri): Bitmap? {
@@ -50,21 +57,45 @@ object ImageProcessor {
         return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
     }
 
+    fun resizeBitmap(source: Bitmap, targetSize: ImageSize): Bitmap {
+        val maxSide = targetSize.maxSide ?: return source
+        
+        val width = source.width
+        val height = source.height
+        
+        val scale = if (width > height) {
+            if (width <= maxSide) return source
+            maxSide.toFloat() / width
+        } else {
+            if (height <= maxSide) return source
+            maxSide.toFloat() / height
+        }
+        
+        val targetWidth = (width * scale).toInt()
+        val targetHeight = (height * scale).toInt()
+        
+        return Bitmap.createScaledBitmap(source, targetWidth, targetHeight, true)
+    }
+
     fun applyWatermark(
         sourceBitmap: Bitmap,
         watermarkText: String,
         position: WatermarkPosition,
         textColor: Int,
-        textSize: Float,
+        textSizeRatio: Float,
         opacity: Int // 0-255
     ): Bitmap {
         val resultBitmap = sourceBitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(resultBitmap)
         
+        // Calculate actual pixel size based on the smaller dimension
+        val baseDimension = resultBitmap.width.coerceAtMost(resultBitmap.height)
+        val calculatedTextSize = baseDimension * textSizeRatio
+        
         val paint = Paint().apply {
             color = textColor
             alpha = opacity
-            this.textSize = textSize
+            this.textSize = calculatedTextSize
             isAntiAlias = true
             textAlign = when (position) {
                 WatermarkPosition.TOP_LEFT, WatermarkPosition.BOTTOM_LEFT -> Paint.Align.LEFT
@@ -73,7 +104,7 @@ object ImageProcessor {
         }
 
         // Use responsive margin
-        val margin = resultBitmap.width.coerceAtMost(resultBitmap.height) * 0.04f
+        val margin = baseDimension * 0.04f
         
         val x = when (position) {
             WatermarkPosition.TOP_LEFT, WatermarkPosition.BOTTOM_LEFT -> margin

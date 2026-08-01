@@ -1,5 +1,5 @@
-- [ ] Add `ImageSize` enum and `resizeBitmap` to `ImageProcessor.kt`
-- [ ] Add `ImageSize` preference to `SettingsRepository.kt`
-- [ ] Update `MainViewModel.kt` to handle image resizing in processing pipeline
-- [ ] Add Image Size selection UI to `MainActivity.kt`
-- [ ] Verify implementation by running the app and checking image dimensions
+- [x] Update `ImageProcessor.kt` to apply `textSize` as a ratio of image dimensions
+- [x] Update `SettingsRepository.kt` default `textSize` to `0.05f`
+- [x] Update `MainViewModel.kt` initial `textSize` to `0.05f`
+- [x] Update `MainActivity.kt` UI to show font size as percentage (1%-20%)
+- [x] Verify that watermark size is consistent across different image sizes

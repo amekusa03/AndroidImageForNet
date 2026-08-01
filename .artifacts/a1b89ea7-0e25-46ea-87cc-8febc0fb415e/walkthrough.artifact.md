@@ -1,34 +1,25 @@
-# Walkthrough - Image Resizing Feature
+# Walkthrough - Relative Font Size Implementation
 
-I have added an image resizing feature that allows you to scale down images before applying the watermark. This ensures that the watermark text size remains consistent relative to the final output image.
+I have changed the watermark font size logic to be relative to the image dimensions. This ensures that the watermark looks consistent across images of different resolutions and when using different resize settings.
 
 ## Changes Made
 
-### Image Processing Logic
-- Added `ImageSize` enum in [ImageProcessor.kt](file:///media/data/Users/ame/document/AndroidStudioProjects/ImageForNet/app/src/main/java/com/kusa/imagefornet/ImageProcessor.kt) with options:
-    - **変更しない (Original)**: No resizing.
-    - **小 (Small)**: Max side 800px.
-    - **中 (Medium)**: Max side 1200px.
-    - **大 (Large)**: Max side 1600px.
-- Implemented `resizeBitmap` to perform aspect-ratio-aware scaling.
-
-### State and Persistence
-- Added `imageSize` to `WatermarkSettings` and `SettingsRepository.kt` to persist the user's preference.
-- Updated `MainViewModel.kt` to chain the resizing process before the watermarking process.
+### Core Processing Logic
+- Modified `applyWatermark` in [ImageProcessor.kt](file:///media/data/Users/ame/document/AndroidStudioProjects/ImageForNet/app/src/main/java/com/kusa/imagefornet/ImageProcessor.kt) to calculate pixel font size using a ratio: `finalTextSize = min(width, height) * ratio`.
+- The margin is also tied to this base dimension (4% of the smaller side).
 
 ### User Interface
-- Added an "画像サイズ" (Image Size) selection section in [MainActivity.kt](file:///media/data/Users/ame/document/AndroidStudioProjects/ImageForNet/app/src/main/java/com/kusa/imagefornet/MainActivity.kt) using `FilterChip` components.
+- Updated the "フォントサイズ" slider in [MainActivity.kt](file:///media/data/Users/ame/document/AndroidStudioProjects/ImageForNet/app/src/main/java/com/kusa/imagefornet/MainActivity.kt):
+    - Changed range to 1% to 20% (`0.01f..0.2f`).
+    - Added `%` unit display.
+
+### Data Persistence
+- Updated [SettingsRepository.kt](file:///media/data/Users/ame/document/AndroidStudioProjects/ImageForNet/app/src/main/java/com/kusa/imagefornet/SettingsRepository.kt) to use `0.05f` (5%) as the default font size ratio.
 
 ## Verification Results
 
-### Automated Tests
-- Compiled the project to ensure no syntax errors.
-
-### Manual Verification Path
-1. Launch the app.
-2. Select an image from the gallery.
-3. Observe the "画像サイズ" selection below the sliders.
-4. Select "小" or "中".
-5. Notice the preview might slightly adjust if the aspect ratio calculation triggers a resize.
-6. Save the image and verify that the output file dimensions match the selected maximum side limit.
-7. Verify that the watermark text size (e.g., 100px) looks identical across different resize options because it's applied after the image has been scaled to its target resolution.
+### Manual Verification
+1. Load an image and set font size to 10%.
+2. Toggle "画像サイズ" between "変更しない" and "小".
+3. Observe that the watermark maintains its relative size and position on the screen, even as the pixel resolution changes.
+4. This confirms the user experience is now intuitive and resolution-independent.
