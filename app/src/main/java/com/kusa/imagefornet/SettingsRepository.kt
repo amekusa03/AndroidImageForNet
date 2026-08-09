@@ -3,6 +3,7 @@ package com.kusa.imagefornet
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -22,6 +23,8 @@ class SettingsRepository(private val context: Context) {
         val OPACITY = floatPreferencesKey("opacity")
         val COLOR = intPreferencesKey("color")
         val IMAGE_SIZE = stringPreferencesKey("image_size")
+        val AUTO_MOSAIC_ENABLED = booleanPreferencesKey("auto_mosaic_enabled")
+        val MOSAIC_STRENGTH = floatPreferencesKey("mosaic_strength")
     }
 
     val settingsFlow: Flow<WatermarkSettings> = context.dataStore.data
@@ -44,7 +47,9 @@ class SettingsRepository(private val context: Context) {
                     )
                 } catch (e: Exception) {
                     ImageSize.ORIGINAL
-                }
+                },
+                autoMosaicEnabled = preferences[PreferencesKeys.AUTO_MOSAIC_ENABLED] ?: false,
+                mosaicStrength = preferences[PreferencesKeys.MOSAIC_STRENGTH] ?: 0.5f
             )
         }
 
@@ -71,6 +76,14 @@ class SettingsRepository(private val context: Context) {
     suspend fun updateImageSize(imageSize: ImageSize) {
         context.dataStore.edit { it[PreferencesKeys.IMAGE_SIZE] = imageSize.name }
     }
+
+    suspend fun updateAutoMosaicEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[PreferencesKeys.AUTO_MOSAIC_ENABLED] = enabled }
+    }
+
+    suspend fun updateMosaicStrength(strength: Float) {
+        context.dataStore.edit { it[PreferencesKeys.MOSAIC_STRENGTH] = strength }
+    }
 }
 
 data class WatermarkSettings(
@@ -79,5 +92,7 @@ data class WatermarkSettings(
     val textSize: Float,
     val opacity: Float,
     val color: Int,
-    val imageSize: ImageSize
+    val imageSize: ImageSize,
+    val autoMosaicEnabled: Boolean,
+    val mosaicStrength: Float
 )

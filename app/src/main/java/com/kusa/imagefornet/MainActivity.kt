@@ -217,6 +217,32 @@ fun ImageForNetApp() {
                                 selectedSize = viewModel.imageSize,
                                 onSizeSelected = { viewModel.updateImageSize(it) }
                             )
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
+
+                            Text("プライバシー保護", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("自動顔モザイク", style = MaterialTheme.typography.bodyMedium)
+                                Switch(
+                                    checked = viewModel.isAutoMosaicEnabled,
+                                    onCheckedChange = { viewModel.updateAutoMosaicEnabled(it) }
+                                )
+                            }
+
+                            if (viewModel.isAutoMosaicEnabled) {
+                                SliderControl(
+                                    label = "モザイクの強さ",
+                                    value = viewModel.mosaicStrength,
+                                    onValueChange = { viewModel.updateMosaicStrength(it) },
+                                    valueRange = 0f..1f,
+                                    displayMultiplier = 100f,
+                                    unit = "%"
+                                )
+                            }
                         }
                     }
 

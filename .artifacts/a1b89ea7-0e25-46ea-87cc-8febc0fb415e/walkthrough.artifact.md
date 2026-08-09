@@ -1,25 +1,34 @@
-# Walkthrough - Relative Font Size Implementation
+# ウォークスルー - 自動顔モザイク機能
 
-I have changed the watermark font size logic to be relative to the image dimensions. This ensures that the watermark looks consistent across images of different resolutions and when using different resize settings.
+Google ML Kit を使用して、画像内の顔を自動的に検出し、プライバシー保護のためにモザイク処理を行う機能を追加しました。
 
-## Changes Made
+## 変更内容
 
-### Core Processing Logic
-- Modified `applyWatermark` in [ImageProcessor.kt](file:///media/data/Users/ame/document/AndroidStudioProjects/ImageForNet/app/src/main/java/com/kusa/imagefornet/ImageProcessor.kt) to calculate pixel font size using a ratio: `finalTextSize = min(width, height) * ratio`.
-- The margin is also tied to this base dimension (4% of the smaller side).
+### 依存関係の追加
+- Google ML Kit Face Detection を導入しました。
+- 非同期処理をスムーズに行うため、`kotlinx-coroutines-play-services` を追加しました。
 
-### User Interface
-- Updated the "フォントサイズ" slider in [MainActivity.kt](file:///media/data/Users/ame/document/AndroidStudioProjects/ImageForNet/app/src/main/java/com/kusa/imagefornet/MainActivity.kt):
-    - Changed range to 1% to 20% (`0.01f..0.2f`).
-    - Added `%` unit display.
+### 画像処理ロジック ([ImageProcessor.kt](file:///media/data/Users/ame/document/AndroidStudioProjects/ImageForNet/app/src/main/java/com/kusa/imagefornet/ImageProcessor.kt))
+- `detectFaces`: ML Kit を使用してビットマップから顔の座標リストを取得します。
+- `applyMosaic`: 検出された顔の領域を「縮小して拡大」する手法でピクセル化（モザイク）します。
+- モザイクの強さを調整できるようにし、ユーザーが好みの粗さを選べるようにしました。
 
-### Data Persistence
-- Updated [SettingsRepository.kt](file:///media/data/Users/ame/document/AndroidStudioProjects/ImageForNet/app/src/main/java/com/kusa/imagefornet/SettingsRepository.kt) to use `0.05f` (5%) as the default font size ratio.
+### 設定と状態管理
+- `SettingsRepository.kt`: 自動モザイクの有効/無効と、モザイクの強さを永続化するようにしました。
+- `MainViewModel.kt`: 画像処理パイプラインを更新し、透かしを入れる前に顔検出とモザイク処理を行うようにしました。
 
-## Verification Results
+### ユーザーインターフェース ([MainActivity.kt](file:///media/data/Users/ame/document/AndroidStudioProjects/ImageForNet/app/src/main/java/com/kusa/imagefornet/MainActivity.kt))
+- 「プライバシー保護」セクションを新設しました。
+- 自動顔モザイクのスイッチと、有効時に表示される「モザイクの強さ」スライダーを追加しました。
 
-### Manual Verification
-1. Load an image and set font size to 10%.
-2. Toggle "画像サイズ" between "変更しない" and "小".
-3. Observe that the watermark maintains its relative size and position on the screen, even as the pixel resolution changes.
-4. This confirms the user experience is now intuitive and resolution-independent.
+## 検証結果
+
+### ビルド確認
+- `app:assembleDebug` が正常に終了することを確認しました。
+
+### 手動確認パス（推奨）
+1. アプリを起動し、顔が写っている写真を選択します。
+2. 「自動顔モザイク」をONにします。
+3. プレビュー上で顔がモザイク処理されることを確認します。
+4. スライダーを動かして、モザイクの粗さが変わることを確認します。
+5. 「ギャラリーに保存」を行い、保存された画像でも正しく適用されていることを確認します。

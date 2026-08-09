@@ -1,5 +1,9 @@
-- [x] Update `ImageProcessor.kt` to apply `textSize` as a ratio of image dimensions
-- [x] Update `SettingsRepository.kt` default `textSize` to `0.05f`
-- [x] Update `MainViewModel.kt` initial `textSize` to `0.05f`
-- [x] Update `MainActivity.kt` UI to show font size as percentage (1%-20%)
-- [x] Verify that watermark size is consistent across different image sizes
+- [x] 依存関係の追加 (ML Kit Face Detection)
+    - [x] `libs.versions.toml` の更新
+    - [x] `app/build.gradle.kts` の更新
+    - [x] Gradle Sync の実行
+- [x] `ImageProcessor.kt` に顔検出とモザイク処理ロジックを追加
+- [x] `SettingsRepository.kt` にモザイク設定の保存処理を追加
+- [x] `MainViewModel.kt` でモザイク状態を管理し、画像処理パイプラインに統合
+- [x] `MainActivity.kt` にモザイク設定のUIを追加
+- [x] 動作確認（ビルド成功を確認）

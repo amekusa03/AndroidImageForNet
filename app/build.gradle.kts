@@ -51,6 +51,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.mlkit.face.detection)
+    implementation(libs.kotlinx.coroutines.play.services)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -8,6 +8,11 @@ import android.graphics.Matrix
 import android.graphics.Paint
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.face.Face
+import com.google.mlkit.vision.face.FaceDetection
+import com.google.mlkit.vision.face.FaceDetectorOptions
+import kotlinx.coroutines.tasks.await
 
 enum class WatermarkPosition {
     TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
@@ -75,6 +80,58 @@ object ImageProcessor {
         val targetHeight = (height * scale).toInt()
         
         return Bitmap.createScaledBitmap(source, targetWidth, targetHeight, true)
+    }
+
+    suspend fun detectFaces(bitmap: Bitmap): List<Face> {
+        val options = FaceDetectorOptions.Builder()
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+            .build()
+        val detector = FaceDetection.getClient(options)
+        val image = InputImage.fromBitmap(bitmap, 0)
+        return try {
+            detector.process(image).await()
+        } catch (e: Exception) {
+            emptyList()
+        } finally {
+            detector.close()
+        }
+    }
+
+    fun applyMosaic(bitmap: Bitmap, faces: List<Face>, strength: Float): Bitmap {
+        if (faces.isEmpty()) return bitmap
+        
+        val result = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+        val canvas = Canvas(result)
+        val paint = Paint().apply { isAntiAlias = false }
+
+        for (face in faces) {
+            val bounds = face.boundingBox
+            val left = bounds.left.coerceAtLeast(0)
+            val top = bounds.top.coerceAtLeast(0)
+            val right = bounds.right.coerceAtMost(bitmap.width)
+            val bottom = bounds.bottom.coerceAtMost(bitmap.height)
+            val width = right - left
+            val height = bottom - top
+
+            if (width <= 0 || height <= 0) continue
+
+            // strength: 0.0f (weak) to 1.0f (strong)
+            // factor: 2 (min) to 52 (max)
+            val factor = (strength * 50 + 2).toInt()
+            val smallWidth = (width / factor).coerceAtLeast(1)
+            val smallHeight = (height / factor).coerceAtLeast(1)
+
+            val faceBitmap = Bitmap.createBitmap(bitmap, left, top, width, height)
+            val smallBitmap = Bitmap.createScaledBitmap(faceBitmap, smallWidth, smallHeight, false)
+            val pixelatedBitmap = Bitmap.createScaledBitmap(smallBitmap, width, height, false)
+
+            canvas.drawBitmap(pixelatedBitmap, left.toFloat(), top.toFloat(), paint)
+            
+            faceBitmap.recycle()
+            smallBitmap.recycle()
+            pixelatedBitmap.recycle()
+        }
+        return result
     }
 
     fun applyWatermark(

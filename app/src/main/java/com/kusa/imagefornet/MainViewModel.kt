@@ -42,6 +42,10 @@ class MainViewModel(private val repository: SettingsRepository) : ViewModel() {
         private set
     var imageSize by mutableStateOf(ImageSize.ORIGINAL)
         private set
+    var isAutoMosaicEnabled by mutableStateOf(false)
+        private set
+    var mosaicStrength by mutableStateOf(0.5f)
+        private set
     
     var isProcessing by mutableStateOf(false)
         private set
@@ -58,6 +62,8 @@ class MainViewModel(private val repository: SettingsRepository) : ViewModel() {
             opacity = settings.opacity
             selectedColor = Color(settings.color)
             imageSize = settings.imageSize
+            isAutoMosaicEnabled = settings.autoMosaicEnabled
+            mosaicStrength = settings.mosaicStrength
             // No need to call updateProcessedImage here as no image is loaded yet
         }
     }
@@ -81,9 +87,15 @@ class MainViewModel(private val repository: SettingsRepository) : ViewModel() {
             delay(100)
             
             val result = withContext(Dispatchers.Default) {
-                val resized = ImageProcessor.resizeBitmap(source, imageSize)
+                var currentBitmap = ImageProcessor.resizeBitmap(source, imageSize)
+                
+                if (isAutoMosaicEnabled) {
+                    val faces = ImageProcessor.detectFaces(currentBitmap)
+                    currentBitmap = ImageProcessor.applyMosaic(currentBitmap, faces, mosaicStrength)
+                }
+
                 ImageProcessor.applyWatermark(
-                    sourceBitmap = resized,
+                    sourceBitmap = currentBitmap,
                     watermarkText = watermarkText,
                     position = position,
                     textColor = selectedColor.toArgb(),
@@ -172,6 +184,18 @@ class MainViewModel(private val repository: SettingsRepository) : ViewModel() {
         imageSize = size
         updateProcessedImage()
         viewModelScope.launch { repository.updateImageSize(size) }
+    }
+
+    fun updateAutoMosaicEnabled(enabled: Boolean) {
+        isAutoMosaicEnabled = enabled
+        updateProcessedImage()
+        viewModelScope.launch { repository.updateAutoMosaicEnabled(enabled) }
+    }
+
+    fun updateMosaicStrength(strength: Float) {
+        mosaicStrength = strength
+        updateProcessedImage()
+        viewModelScope.launch { repository.updateMosaicStrength(strength) }
     }
 
     companion object {
