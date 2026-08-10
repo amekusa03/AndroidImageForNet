@@ -3,6 +3,7 @@ package com.kusa.imagefornet
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -18,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.OutputStream
@@ -47,6 +49,10 @@ class MainViewModel(private val repository: SettingsRepository) : ViewModel() {
     var mosaicStrength by mutableStateOf(0.5f)
         private set
     
+    private var cachedFaces: List<Rect> = emptyList()
+    private var lastDetectionImage: Bitmap? = null
+    private var lastDetectionSize: ImageSize? = null
+
     var isProcessing by mutableStateOf(false)
         private set
 
@@ -74,6 +80,8 @@ class MainViewModel(private val repository: SettingsRepository) : ViewModel() {
                 ImageProcessor.loadBitmap(context, uri)
             }
             originalBitmap = bitmap
+            cachedFaces = emptyList()
+            lastDetectionImage = null
             updateProcessedImage()
         }
     }
@@ -83,26 +91,63 @@ class MainViewModel(private val repository: SettingsRepository) : ViewModel() {
         processingJob = viewModelScope.launch {
             val source = originalBitmap ?: return@launch
             isProcessing = true
-            // Small delay to debounce rapid slider changes
-            delay(100)
+            // Increased delay for low-spec devices
+            delay(200)
             
             val result = withContext(Dispatchers.Default) {
-                var currentBitmap = ImageProcessor.resizeBitmap(source, imageSize)
+                // 1. Resize (creates a new bitmap if necessary)
+                val resized = ImageProcessor.resizeBitmap(source, imageSize)
+                
+                if (!isActive) {
+                    if (resized != source) resized.recycle()
+                    return@withContext null
+                }
+
+                // Ensure we have a mutable bitmap to work with
+                val workingBitmap = if (resized.isMutable && resized != source) {
+                    resized
+                } else {
+                    val copy = resized.copy(Bitmap.Config.ARGB_8888, true)
+                    if (resized != source) resized.recycle()
+                    copy
+                }
+
+                if (!isActive) {
+                    if (workingBitmap != source) workingBitmap.recycle()
+                    return@withContext null
+                }
                 
                 if (isAutoMosaicEnabled) {
-                    val faces = ImageProcessor.detectFaces(currentBitmap)
-                    currentBitmap = ImageProcessor.applyMosaic(currentBitmap, faces, mosaicStrength)
+                    // Check cache
+                    if (lastDetectionImage != source || lastDetectionSize != imageSize) {
+                        cachedFaces = ImageProcessor.detectFaces(workingBitmap)
+                        lastDetectionImage = source
+                        lastDetectionSize = imageSize
+                    }
+                    if (!isActive) {
+                        if (workingBitmap != source) workingBitmap.recycle()
+                        return@withContext null
+                    }
+                    ImageProcessor.applyMosaic(workingBitmap, cachedFaces, mosaicStrength)
+                }
+
+                if (!isActive) {
+                    if (workingBitmap != source) workingBitmap.recycle()
+                    return@withContext null
                 }
 
                 ImageProcessor.applyWatermark(
-                    sourceBitmap = currentBitmap,
+                    targetBitmap = workingBitmap,
                     watermarkText = watermarkText,
                     position = position,
                     textColor = selectedColor.toArgb(),
                     textSizeRatio = textSize,
                     opacity = opacity.toInt()
                 )
+                
+                workingBitmap
             }
+
             processedBitmap = result
             isProcessing = false
         }

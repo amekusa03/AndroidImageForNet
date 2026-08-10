@@ -6,12 +6,13 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.Rect
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
 import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import kotlinx.coroutines.yield
 import kotlinx.coroutines.tasks.await
 
 enum class WatermarkPosition {
@@ -82,34 +83,70 @@ object ImageProcessor {
         return Bitmap.createScaledBitmap(source, targetWidth, targetHeight, true)
     }
 
-    suspend fun detectFaces(bitmap: Bitmap): List<Face> {
+    suspend fun detectFaces(bitmap: Bitmap): List<Rect> {
         val options = FaceDetectorOptions.Builder()
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
             .build()
         val detector = FaceDetection.getClient(options)
-        val image = InputImage.fromBitmap(bitmap, 0)
+        
+        // Optimize: Use a smaller version of the bitmap for detection if it's too large
+        val maxDetectionSide = 480
+        val scale = if (bitmap.width > maxDetectionSide || bitmap.height > maxDetectionSide) {
+            maxDetectionSide.toFloat() / maxOf(bitmap.width, bitmap.height)
+        } else {
+            1.0f
+        }
+
+        val detectionBitmap = if (scale != 1.0f) {
+            Bitmap.createScaledBitmap(
+                bitmap,
+                (bitmap.width * scale).toInt(),
+                (bitmap.height * scale).toInt(),
+                true
+            )
+        } else {
+            bitmap
+        }
+
+        val image = InputImage.fromBitmap(detectionBitmap, 0)
         return try {
-            detector.process(image).await()
+            val faces = detector.process(image).await()
+            faces.map { face ->
+                val box = face.boundingBox
+                if (scale != 1.0f) {
+                    val invScale = 1.0f / scale
+                    Rect(
+                        (box.left * invScale).toInt(),
+                        (box.top * invScale).toInt(),
+                        (box.right * invScale).toInt(),
+                        (box.bottom * invScale).toInt()
+                    )
+                } else {
+                    box
+                }
+            }
         } catch (e: Exception) {
             emptyList()
         } finally {
+            if (detectionBitmap != bitmap) {
+                detectionBitmap.recycle()
+            }
             detector.close()
         }
     }
 
-    fun applyMosaic(bitmap: Bitmap, faces: List<Face>, strength: Float): Bitmap {
-        if (faces.isEmpty()) return bitmap
+    suspend fun applyMosaic(bitmap: Bitmap, faces: List<Rect>, strength: Float) {
+        if (faces.isEmpty()) return
         
-        val result = bitmap.copy(Bitmap.Config.ARGB_8888, true)
-        val canvas = Canvas(result)
+        val canvas = Canvas(bitmap)
         val paint = Paint().apply { isAntiAlias = false }
 
-        for (face in faces) {
-            val bounds = face.boundingBox
-            val left = bounds.left.coerceAtLeast(0)
-            val top = bounds.top.coerceAtLeast(0)
-            val right = bounds.right.coerceAtMost(bitmap.width)
-            val bottom = bounds.bottom.coerceAtMost(bitmap.height)
+        for (rect in faces) {
+            yield() // Check for cancellation
+            val left = rect.left.coerceAtLeast(0)
+            val top = rect.top.coerceAtLeast(0)
+            val right = rect.right.coerceAtMost(bitmap.width)
+            val bottom = rect.bottom.coerceAtMost(bitmap.height)
             val width = right - left
             val height = bottom - top
 
@@ -131,22 +168,20 @@ object ImageProcessor {
             smallBitmap.recycle()
             pixelatedBitmap.recycle()
         }
-        return result
     }
 
     fun applyWatermark(
-        sourceBitmap: Bitmap,
+        targetBitmap: Bitmap,
         watermarkText: String,
         position: WatermarkPosition,
         textColor: Int,
         textSizeRatio: Float,
         opacity: Int // 0-255
-    ): Bitmap {
-        val resultBitmap = sourceBitmap.copy(Bitmap.Config.ARGB_8888, true)
-        val canvas = Canvas(resultBitmap)
+    ) {
+        val canvas = Canvas(targetBitmap)
         
         // Calculate actual pixel size based on the smaller dimension
-        val baseDimension = resultBitmap.width.coerceAtMost(resultBitmap.height)
+        val baseDimension = targetBitmap.width.coerceAtMost(targetBitmap.height)
         val calculatedTextSize = baseDimension * textSizeRatio
         
         val paint = Paint().apply {
@@ -165,16 +200,14 @@ object ImageProcessor {
         
         val x = when (position) {
             WatermarkPosition.TOP_LEFT, WatermarkPosition.BOTTOM_LEFT -> margin
-            WatermarkPosition.TOP_RIGHT, WatermarkPosition.BOTTOM_RIGHT -> resultBitmap.width - margin
+            WatermarkPosition.TOP_RIGHT, WatermarkPosition.BOTTOM_RIGHT -> targetBitmap.width - margin
         }
         
         val y = when (position) {
             WatermarkPosition.TOP_LEFT, WatermarkPosition.TOP_RIGHT -> paint.textSize + margin
-            WatermarkPosition.BOTTOM_LEFT, WatermarkPosition.BOTTOM_RIGHT -> resultBitmap.height - margin
+            WatermarkPosition.BOTTOM_LEFT, WatermarkPosition.BOTTOM_RIGHT -> targetBitmap.height - margin
         }
 
         canvas.drawText(watermarkText, x, y, paint)
-        
-        return resultBitmap
     }
 }

@@ -1,9 +1,5 @@
-- [x] 依存関係の追加 (ML Kit Face Detection)
-    - [x] `libs.versions.toml` の更新
-    - [x] `app/build.gradle.kts` の更新
-    - [x] Gradle Sync の実行
-- [x] `ImageProcessor.kt` に顔検出とモザイク処理ロジックを追加
-- [x] `SettingsRepository.kt` にモザイク設定の保存処理を追加
-- [x] `MainViewModel.kt` でモザイク状態を管理し、画像処理パイプラインに統合
-- [x] `MainActivity.kt` にモザイク設定のUIを追加
-- [x] 動作確認（ビルド成功を確認）
+- [x] 低スペックデバイス向けメモリ最適化とクラッシュ修正
+    - [x] `AndroidManifest.xml` に `android:largeHeap="true"` を追加
+    - [x] `ImageProcessor.kt` のリファクタリング (ビットマップコピーの削減)
+    - [x] `MainViewModel.kt` の最適化 (メモリ管理とキャンセル対応の強化)
+    - [x] 動作確認 (低メモリ環境での安定性)
