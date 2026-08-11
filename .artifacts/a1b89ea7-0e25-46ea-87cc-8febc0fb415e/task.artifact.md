@@ -1,5 +1,0 @@
-- [x] 低スペックデバイス向けメモリ最適化とクラッシュ修正
-    - [x] `AndroidManifest.xml` に `android:largeHeap="true"` を追加
-    - [x] `ImageProcessor.kt` のリファクタリング (ビットマップコピーの削減)
-    - [x] `MainViewModel.kt` の最適化 (メモリ管理とキャンセル対応の強化)
-    - [x] 動作確認 (低メモリ環境での安定性)
