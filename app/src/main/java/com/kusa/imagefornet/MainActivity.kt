@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -79,7 +80,7 @@ fun ImageForNetApp() {
                         IconButton(onClick = { 
                             shareImage(context, viewModel.processedBitmap!!)
                         }) {
-                            Icon(Icons.Default.Share, contentDescription = "共有")
+                            Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share))
                         }
                     }
                 },
@@ -93,7 +94,7 @@ fun ImageForNetApp() {
                 ExtendedFloatingActionButton(
                     onClick = { launcher.launch("image/*") },
                     icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                    text = { Text("画像を選択") }
+                    text = { Text(stringResource(R.string.select_image)) }
                 )
             }
         }
@@ -134,7 +135,7 @@ fun ImageForNetApp() {
                             )
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                "画像を選択してください",
+                                stringResource(R.string.please_select_image),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                             )
                         }
@@ -166,13 +167,13 @@ fun ImageForNetApp() {
                                 onValueChange = { 
                                     viewModel.updateWatermarkText(it)
                                 },
-                                label = { Text("ウォーターマークのテキスト") },
+                                label = { Text(stringResource(R.string.watermark_text_label)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 singleLine = true
                             )
 
-                            Text("配置場所", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.position_label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                             PositionGrid(
                                 selectedPosition = viewModel.position,
                                 onPositionSelected = { 
@@ -180,7 +181,7 @@ fun ImageForNetApp() {
                                 }
                             )
 
-                            Text("文字色", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.color_label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                             ColorPalette(
                                 selectedColor = viewModel.selectedColor,
                                 onColorSelected = { 
@@ -189,7 +190,7 @@ fun ImageForNetApp() {
                             )
 
                             SliderControl(
-                                label = "フォントサイズ",
+                                label = stringResource(R.string.font_size_label),
                                 value = viewModel.textSize,
                                 onValueChange = { 
                                     viewModel.updateTextSize(it)
@@ -200,7 +201,7 @@ fun ImageForNetApp() {
                             )
 
                             SliderControl(
-                                label = "不透明度",
+                                label = stringResource(R.string.opacity_label),
                                 value = viewModel.opacity,
                                 onValueChange = { 
                                     viewModel.updateOpacity(it)
@@ -212,7 +213,7 @@ fun ImageForNetApp() {
 
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
 
-                            Text("画像サイズ", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.image_size_label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                             ImageSizeSelector(
                                 selectedSize = viewModel.imageSize,
                                 onSizeSelected = { viewModel.updateImageSize(it) }
@@ -220,13 +221,13 @@ fun ImageForNetApp() {
 
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
 
-                            Text("プライバシー保護", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.privacy_protection_label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("自動顔モザイク", style = MaterialTheme.typography.bodyMedium)
+                                Text(stringResource(R.string.auto_mosaic_label), style = MaterialTheme.typography.bodyMedium)
                                 Switch(
                                     checked = viewModel.isAutoMosaicEnabled,
                                     onCheckedChange = { viewModel.updateAutoMosaicEnabled(it) }
@@ -235,7 +236,7 @@ fun ImageForNetApp() {
 
                             if (viewModel.isAutoMosaicEnabled) {
                                 SliderControl(
-                                    label = "モザイクの強さ",
+                                    label = stringResource(R.string.mosaic_strength_label),
                                     value = viewModel.mosaicStrength,
                                     onValueChange = { viewModel.updateMosaicStrength(it) },
                                     valueRange = 0f..1f,
@@ -249,7 +250,11 @@ fun ImageForNetApp() {
                     Button(
                         onClick = {
                             viewModel.saveImage(context) { success ->
-                                val msg = if (success) "ギャラリーに保存しました" else "保存に失敗しました"
+                                val msg = if (success) {
+                                    context.getString(R.string.saved_to_gallery)
+                                } else {
+                                    context.getString(R.string.failed_to_save)
+                                }
                                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                             }
                         },
@@ -261,14 +266,14 @@ fun ImageForNetApp() {
                     ) {
                         Icon(Icons.Default.Done, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("ギャラリーに保存 (EXIF削除済み)", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.save_to_gallery), fontWeight = FontWeight.Bold)
                     }
                     
                     TextButton(
                         onClick = { launcher.launch("image/*") },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("別の画像を選択")
+                        Text(stringResource(R.string.select_another_image))
                     }
                 }
             }
@@ -287,7 +292,7 @@ fun ImageSizeSelector(selectedSize: ImageSize, onSizeSelected: (ImageSize) -> Un
                 modifier = Modifier.weight(1f),
                 selected = selectedSize == size,
                 onClick = { onSizeSelected(size) },
-                label = { Text(size.label, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+                label = { Text(stringResource(size.labelRes), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
                 shape = RoundedCornerShape(8.dp)
             )
         }
@@ -308,7 +313,7 @@ fun PositionGrid(selectedPosition: WatermarkPosition, onPositionSelected: (Water
                         modifier = Modifier.weight(1f),
                         selected = selectedPosition == pos,
                         onClick = { onPositionSelected(pos) },
-                        label = { Text(pos.name.replace("_", " "), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+                        label = { Text(stringResource(pos.labelRes), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
                         shape = RoundedCornerShape(8.dp)
                     )
                 }
@@ -370,8 +375,9 @@ private fun shareImage(context: android.content.Context, bitmap: Bitmap) {
             putExtra(Intent.EXTRA_STREAM, contentUri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(intent, "画像を共有"))
+        context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_image)))
     } catch (e: Exception) {
-        Toast.makeText(context, "共有に失敗しました", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.failed_to_share), Toast.LENGTH_SHORT).show()
     }
 }
+

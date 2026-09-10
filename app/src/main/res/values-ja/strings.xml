@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">ImageForNet</string>
+    <string name="share">共有</string>
+    <string name="select_image">画像を選択</string>
+    <string name="please_select_image">画像を選択してください</string>
+    <string name="watermark_text_label">ウォーターマークのテキスト</string>
+    <string name="position_label">配置場所</string>
+    <string name="color_label">文字色</string>
+    <string name="font_size_label">フォントサイズ</string>
+    <string name="opacity_label">不透明度</string>
+    <string name="image_size_label">画像サイズ</string>
+    <string name="privacy_protection_label">プライバシー保護</string>
+    <string name="auto_mosaic_label">自動顔モザイク</string>
+    <string name="mosaic_strength_label">モザイクの強さ</string>
+    <string name="save_to_gallery">ギャラリーに保存 (EXIF削除済み)</string>
+    <string name="select_another_image">別の画像を選択</string>
+    <string name="saved_to_gallery">ギャラリーに保存しました</string>
+    <string name="failed_to_save">保存に失敗しました</string>
+    <string name="failed_to_share">共有に失敗しました</string>
+    <string name="share_image">画像を共有</string>
+
+    <string name="image_size_original">変更しない</string>
+    <string name="image_size_small">小</string>
+    <string name="image_size_medium">中</string>
+    <string name="image_size_large">大</string>
+
+    <string name="position_top_left">左上</string>
+    <string name="position_top_right">右上</string>
+    <string name="position_bottom_left">左下</string>
+    <string name="position_bottom_right">右下</string>
+</resources>

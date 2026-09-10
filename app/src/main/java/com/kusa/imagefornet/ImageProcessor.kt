@@ -8,6 +8,7 @@ import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Rect
 import android.net.Uri
+import androidx.annotation.StringRes
 import androidx.exifinterface.media.ExifInterface
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
@@ -15,15 +16,18 @@ import com.google.mlkit.vision.face.FaceDetectorOptions
 import kotlinx.coroutines.yield
 import kotlinx.coroutines.tasks.await
 
-enum class WatermarkPosition {
-    TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
+enum class WatermarkPosition(@StringRes val labelRes: Int) {
+    TOP_LEFT(R.string.position_top_left),
+    TOP_RIGHT(R.string.position_top_right),
+    BOTTOM_LEFT(R.string.position_bottom_left),
+    BOTTOM_RIGHT(R.string.position_bottom_right)
 }
 
-enum class ImageSize(val label: String, val maxSide: Int?) {
-    ORIGINAL("変更しない", null),
-    SMALL("小", 800),
-    MEDIUM("中", 1200),
-    LARGE("大", 1600)
+enum class ImageSize(@StringRes val labelRes: Int, val maxSide: Int?) {
+    ORIGINAL(R.string.image_size_original, null),
+    SMALL(R.string.image_size_small, 800),
+    MEDIUM(R.string.image_size_medium, 1200),
+    LARGE(R.string.image_size_large, 1600)
 }
 
 object ImageProcessor {

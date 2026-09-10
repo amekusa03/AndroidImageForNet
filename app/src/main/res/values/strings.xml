@@ -1,3 +1,31 @@
 <resources>
     <string name="app_name">ImageForNet</string>
+    <string name="share">Share</string>
+    <string name="select_image">Select Image</string>
+    <string name="please_select_image">Please select an image</string>
+    <string name="watermark_text_label">Watermark Text</string>
+    <string name="position_label">Position</string>
+    <string name="color_label">Text Color</string>
+    <string name="font_size_label">Font Size</string>
+    <string name="opacity_label">Opacity</string>
+    <string name="image_size_label">Image Size</string>
+    <string name="privacy_protection_label">Privacy Protection</string>
+    <string name="auto_mosaic_label">Auto Face Mosaic</string>
+    <string name="mosaic_strength_label">Mosaic Strength</string>
+    <string name="save_to_gallery">Save to Gallery (EXIF Removed)</string>
+    <string name="select_another_image">Select Another Image</string>
+    <string name="saved_to_gallery">Saved to gallery</string>
+    <string name="failed_to_save">Failed to save image</string>
+    <string name="failed_to_share">Failed to share image</string>
+    <string name="share_image">Share Image</string>
+
+    <string name="image_size_original">Original</string>
+    <string name="image_size_small">Small</string>
+    <string name="image_size_medium">Medium</string>
+    <string name="image_size_large">Large</string>
+
+    <string name="position_top_left">Top Left</string>
+    <string name="position_top_right">Top Right</string>
+    <string name="position_bottom_left">Bottom Left</string>
+    <string name="position_bottom_right">Bottom Right</string>
 </resources>
